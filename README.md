@@ -1,90 +1,99 @@
-# 🚀 跨雲微服務架構：本機開發與 GCP 正式環境 (K8s Infra)
+# Multi-Service Kubernetes Infrastructure
 
-這是一套企業級的 Kubernetes (K8s) 基礎設施程式碼，支援**雙雲端環境** (Local Docker Desktop K8s + GCP GKE)，並內建獨創的「智慧型異地備援 (Active Failover)」機制。
+This repository contains the Kubernetes infrastructure code (Manifests) for deploying and managing a multi-service application environment. It supports both local development (via Docker Desktop / Minikube) and production deployment (via Google Kubernetes Engine).
 
-## 🏛️ 架構概覽 (Architecture Overview)
+## Architecture Overview
 
-本專案將四套獨立的微服務應用整合在同一個叢集中，透過 `shared-nginx` 閘道器統一調度網路流量。
+The system utilizes a central API Gateway (Nginx) to route traffic to four distinct microservices. It features stateless application nodes backed by a managed MongoDB Atlas cluster and a Persistent Volume Claim (PVC) for durable media storage.
 
-**整合的微服務包含：**
-1. 🏎️ **Tire ERP 系統** (後端 Python/Django, 前端 Vue)
-2. 📓 **DayNote 日記本** (Next.js 應用)
-3. 🐾 **Pet Adoption 認養系統** (Node.js Express)
-4. 🍼 **FEEDING 餵食系統** (Node.js Express)
-
-### 儲存與資料庫 (Storage & Database)
-*   **無狀態應用 (Stateless)**：所有的 API 與 Frontend 容器皆為無狀態設計。
-*   **資料庫雲端化**：統一連接至外部的 **MongoDB Atlas**，徹底解決本地容器重啟導致資料流失的問題。
-*   **永久硬碟掛載 (PVC)**：DayNote 的上傳圖片透過 K8s 的 Persistent Volume Claim 技術，外接永久硬碟至 `/app/data`，保證檔案不滅。
-
----
-
-## 🛡️ 核心亮點：Nginx 智慧型異地備援 (Failover)
-
-為了讓開發者在本機端享有「就算把伺服器搞壞也不怕」的體驗，我們實作了**主動式攔截跳轉技術**。
-
-1. **流量閘道器**：所有流量都會先經過 `shared-nginx`。
-2. **錯誤攔截**：如果本機某個服務當機 (例如 `tire-erp` 死掉，回傳 `502 Bad Gateway`)，Nginx **不會**將這個錯誤直接噴給使用者。
-3. **無縫接軌**：Nginx 會攔截錯誤，彈出友善的「🚧 系統維護與切換中」畫面。
-4. **自動跳轉**：畫面出現後 3 秒，透過 JavaScript 動態判斷使用者的連線 Port，將他們自動導航飛往 GCP 的備用正式環境 (`http://35.221.153.58`)。
-
----
-
-## 🔐 安全規範 (Security & Secrets)
-
-**絕對禁止將您的 `secrets.yaml` 上傳至 Git！** (已透過 `.gitignore` 嚴格把關)。
-
-如果新成員要取得連線權限，請遵循以下步驟：
-1. 複製 `secrets.yaml.example` 並重新命名為 `secrets.yaml`。
-2. 將您從 MongoDB Atlas 取得的連線字串填入檔案中。
-3. 執行指令：`kubectl apply -f secrets.yaml` (請留意您當前的 K8s Context 位於本地還是雲端)。
-
----
-
-## 💻 本機開發環境指南 (Local Development)
-
-若要在本機啟動整套環境供開發與測試使用：
-
-**1. 部署所有資源**
-```bash
-# 切換至本地 K8s
-kubectl config use-context docker-desktop
-
-# 一鍵套用所有設定檔
-kubectl apply -f k8s-full-stack.yaml
+```mermaid
+graph TD
+    Client[Client Browser] -->|HTTP/80| Nginx[Shared Nginx Gateway]
+    
+    subgraph K8s Cluster
+        Nginx -->|/| TireERP[Tire ERP Service :8000]
+        Nginx -->|/daynote| DaynoteFront[DayNote Frontend :3000]
+        Nginx -->|/api| DaynoteBack[DayNote Backend :5000]
+        Nginx -->|/pet| PetAdoption[Pet Adoption Service :5000]
+        Nginx -->|/feeding| Feeding[Feeding Service :3000]
+        
+        DaynoteBack --> PVC[(Persistent Volume: /app/data)]
+    end
+    
+    TireERP -.->|MongoDB URI| MongoAtlas[(MongoDB Atlas)]
+    DaynoteBack -.->|MongoDB URI| MongoAtlas
+    PetAdoption -.->|MongoDB URI| MongoAtlas
 ```
 
-**2. 打通本機網路與 IPv6 (關鍵！)**
-由於 K8s 預設隱藏在虛擬網路中，且為了解決 `ngrok` 預設尋找 IPv6 通道導致的拒絕連線問題，請務必執行此橋樑指令：
-```powershell
+## Microservices Stack
+
+| Service | Framework | Port (ClusterIP) | Description |
+|---|---|---|---|
+| **Tire ERP** | Python (Django) + Vue | 8000 | Enterprise Resource Planning system for tire inventory. |
+| **DayNote** | Next.js (Frontend) / Express (Backend) | 3000 / 5000 | Journaling application with durable image uploads. |
+| **Pet Adoption** | Node.js (Express) | 5000 | Pet adoption and signature platform. |
+| **Feeding** | Node.js (Express) | 3000 | Feeding tracking application. |
+
+## High Availability & Failover
+
+This infrastructure implements an Active/Passive failover mechanism handled at the Ingress/Gateway level.
+
+- **Gateway Interception:** The `shared-nginx` service intercepts `502 Bad Gateway` and `504 Gateway Timeout` errors from upstream local services.
+- **Client-Side Routing:** Upon upstream failure, Nginx serves a fallback HTML page that automatically redirects the client to the production GKE endpoints (`35.221.153.58`) after a 3-second delay, ensuring uninterrupted user experience during local outages.
+
+## Deployment Guide
+
+### Prerequisites
+- `kubectl` configured with target cluster context.
+- Target cluster must support standard `Service`, `Deployment`, and `PersistentVolumeClaim` resources.
+- MongoDB Atlas connection strings.
+
+### Secrets Management
+Secrets are managed out-of-tree for security. Before applying manifests, you must provide the database credentials.
+
+1. Copy the example configuration:
+   ```bash
+   cp secrets.yaml.example secrets.yaml
+   ```
+2. Populate `secrets.yaml` with your production connection strings.
+3. Apply the secrets:
+   ```bash
+   kubectl apply -f secrets.yaml
+   ```
+
+### 1. Local Development (Docker Desktop)
+The local environment utilizes `ClusterIP` services routed through the Nginx gateway.
+
+```bash
+# Set context
+kubectl config use-context docker-desktop
+
+# Apply full stack
+kubectl apply -f k8s-full-stack.yaml
+
+# Establish port-forwarding (Binds IPv4/IPv6 to prevent ngrok resolution errors)
 kubectl port-forward svc/shared-nginx 80:80 --address 127.0.0.1,::1
 ```
 
-**3. 模擬當機跳轉測試**
-如果您想測試「當機跳轉 GCP 雲端」的功能，請執行：
-```powershell
-kubectl scale deployment tire-erp --replicas=0
-```
-接著在瀏覽器重新整理本機網頁，您就能欣賞這套精緻的 Failover 機制。
+### 2. Production Deployment (GKE)
+The production environment utilizes `LoadBalancer` services to expose endpoints directly.
 
----
-
-## ☁️ GCP 正式環境部署指南 (Production Deployment)
-
-在將更新推往 GCP 前，請確保您的 Container Image 已推廣至 Google Artifact Registry 或是 Docker Hub 且標籤為 `:master`。
-
-**一鍵部署指令**
 ```bash
-# 切換至 GCP 雲端
-kubectl config use-context gke_qqcat-454915_asia-east1-a_steve-k8s-cluster
+# Set context to GKE cluster
+kubectl config use-context gke_[PROJECT_ID]_[ZONE]_[CLUSTER_NAME]
 
-# 套用正式版設定
+# Apply production manifests
 kubectl apply -f k8s-prod.yaml
 
-# 觸發強制更新 (重要：解決 K8s ImagePullPolicy 緩存不更新問題)
+# Force rollout to ensure latest image pulls (bypass ImagePullPolicy cache)
 kubectl rollout restart deployment tire-erp
 ```
 
----
+## Maintenance & Cost Optimization
 
-*Generated by Antigravity AI for a Top-Tier Cloud Architect.*
+To optimize costs in the GCP environment during non-business hours, node pools are managed via Google Cloud Scheduler.
+
+- **Scale Up (0 20 * * *):** Resizes `default-pool` to 1 node via GKE REST API.
+- **Scale Down (0 2 * * *):** Resizes `default-pool` to 0 nodes via GKE REST API.
+
+*Note: Infrastructure definitions are maintained by the DevSecOps team. Do not commit `.env` or `secrets.yaml` to this repository.*
