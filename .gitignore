@@ -1,0 +1,20 @@
+# Security: Secrets & Credentials
+secrets.yaml
+*.env
+.env.*
+*.key
+*.pem
+*.pfx
+*.p12
+
+# K8s Local Data & Configs
+kubeconfig
+*.kubeconfig
+*.bak
+*.dump
+dump/
+
+# Temporary files
+*.tmp
+*.temp
+*.log

@@ -1,0 +1,323 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  nginx.conf: |
+    worker_processes 1;
+
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        include       mime.types;
+        default_type  application/octet-stream;
+
+        sendfile        on;
+        keepalive_timeout  65;
+
+        # Tire ERP Server (zhqy.ngrok.pro)
+        server {
+            listen       80;
+            server_name  zhqy.ngrok.pro;
+            error_page 502 504 =200 /failover.html;
+            location = /failover.html {
+                default_type text/html;
+                return 200 "<!DOCTYPE html><html><head><meta charset='utf-8'><title>環境切換中</title></head><body style='text-align:center; padding: 50px; font-family: sans-serif; background: #222; color: #fff;'><h1>🚧 環境 1 (本地) 忙碌中或斷線</h1><h2>系統將於 3 秒後自動切換至【備用正式環境】...</h2><p>如果沒有自動跳轉，請點擊 <a href='#' id='failover-link' style='color: #00ffcc;'>這裡</a>。</p><script>var target = 'http://35.221.153.58' + (window.location.port ? ':' + window.location.port : '') + window.location.pathname; document.getElementById('failover-link').href = target; setTimeout(function(){ window.location.href = target; }, 3000);</script></body></html>";
+            }
+
+
+            location / {
+                proxy_pass http://tire-erp:8000;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+        }
+
+        # Other Apps Server (meowlab.ngrok.app)
+        server {
+            listen       80 default_server;
+            server_name  meowlab.ngrok.app;
+            error_page 502 504 =200 /failover.html;
+            location = /failover.html {
+                default_type text/html;
+                return 200 "<!DOCTYPE html><html><head><meta charset='utf-8'><title>環境切換中</title></head><body style='text-align:center; padding: 50px; font-family: sans-serif; background: #222; color: #fff;'><h1>🚧 環境 1 (本地) 忙碌中或斷線</h1><h2>系統將於 3 秒後自動切換至【備用正式環境】...</h2><p>如果沒有自動跳轉，請點擊 <a href='#' id='failover-link' style='color: #00ffcc;'>這裡</a>。</p><script>var target = 'http://35.221.153.58' + (window.location.port ? ':' + window.location.port : '') + window.location.pathname; document.getElementById('failover-link').href = target; setTimeout(function(){ window.location.href = target; }, 3000);</script></body></html>";
+            }
+
+
+            location = / {
+                return 301 /daynote/;
+            }
+
+            # dayNoteApp Next.js Frontend (uses /daynote basePath)
+            location /daynote {
+                proxy_pass http://daynote-frontend:3000;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            # dayNoteApp API Backend fallback (since frontend requests /api/ directly)
+            location /api/ {
+                proxy_pass http://daynote-backend:5000/api/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            # FEEDING App Node.js Express (stripped suffix)
+            location = /feeding {
+                return 301 /feeding/;
+            }
+            location /feeding/ {
+                proxy_pass http://feeding:3000/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            # Pet Adoption Signing Node.js Express (stripped suffix)
+            location = /pet {
+                return 301 /pet/;
+            }
+            location /pet/ {
+                proxy_pass http://pet-adoption:5000/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+        }
+    }
+---
+# 1. Tire ERP
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tire-erp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tire-erp
+  template:
+    metadata:
+      labels:
+        app: tire-erp
+    spec:
+      containers:
+        - name: tire-erp
+          image: tire-erp:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: TIRE_ERP_MONGO_URI
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tire-erp
+spec:
+  selector:
+    app: tire-erp
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+# 2. FEEDING
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feeding
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: feeding
+  template:
+    metadata:
+      labels:
+        app: feeding
+    spec:
+      containers:
+        - name: feeding
+          image: feeding:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: feeding
+spec:
+  selector:
+    app: feeding
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+# 3. daynote-backend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daynote-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: daynote-backend
+  template:
+    metadata:
+      labels:
+        app: daynote-backend
+    spec:
+      containers:
+        - name: daynote-backend
+          image: daynote-backend:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: DAYNOTE_MONGO_URI
+            - name: PORT
+              value: "5000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: daynote-backend
+spec:
+  selector:
+    app: daynote-backend
+  ports:
+    - port: 5000
+      targetPort: 5000
+---
+# 4. daynote-frontend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daynote-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: daynote-frontend
+  template:
+    metadata:
+      labels:
+        app: daynote-frontend
+    spec:
+      containers:
+        - name: daynote-frontend
+          image: daynote-frontend:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: daynote-frontend
+spec:
+  selector:
+    app: daynote-frontend
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+# 5. Pet Adoption
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pet-adoption
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pet-adoption
+  template:
+    metadata:
+      labels:
+        app: pet-adoption
+    spec:
+      containers:
+        - name: pet-adoption
+          image: pet-adoption:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          env:
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: PET_MONGODB_URI
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pet-adoption
+spec:
+  selector:
+    app: pet-adoption
+  ports:
+    - port: 5000
+      targetPort: 5000
+---
+# 6. Shared Nginx Gateway
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shared-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shared-nginx
+  template:
+    metadata:
+      labels:
+        app: shared-nginx
+    spec:
+      containers:
+        - name: shared-nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+      volumes:
+        - name: config-volume
+          configMap:
+            name: nginx-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shared-nginx
+spec:
+  selector:
+    app: shared-nginx
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
