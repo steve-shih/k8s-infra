@@ -5,6 +5,7 @@ with open('k8s-full-stack.yaml', 'r', encoding='utf-8') as f:
     content = f.read()
 
 failover_block = '''
+            proxy_intercept_errors on;
             error_page 502 504 =200 /failover.html;
             location = /failover.html {
                 default_type text/html;

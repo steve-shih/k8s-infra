@@ -21,6 +21,7 @@ data:
         server {
             listen       80;
             server_name  zhqy.ngrok.pro;
+            proxy_intercept_errors on;
             error_page 502 504 =200 /failover.html;
             location = /failover.html {
                 default_type text/html;
@@ -41,6 +42,7 @@ data:
         server {
             listen       80 default_server;
             server_name  meowlab.ngrok.app;
+            proxy_intercept_errors on;
             error_page 502 504 =200 /failover.html;
             location = /failover.html {
                 default_type text/html;
