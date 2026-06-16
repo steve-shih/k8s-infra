@@ -228,10 +228,23 @@ spec:
                   key: DAYNOTE_MONGO_URI
             - name: PORT
               value: "5000"
+            - name: GCS_BUCKET_NAME
+              value: "petpa"
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/app/secrets/gcp-service-account.json"
           volumeMounts:
             - name: daynote-data
               mountPath: /app/data
+            - name: gcp-key
+              mountPath: "/app/secrets"
+              readOnly: true
       volumes:
+        - name: gcp-key
+          secret:
+            secretName: db-secrets
+            items:
+              - key: gcp-service-account.json
+                path: gcp-service-account.json
         - name: daynote-data
           persistentVolumeClaim:
             claimName: daynote-data-pvc

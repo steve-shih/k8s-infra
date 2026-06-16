@@ -199,6 +199,10 @@ spec:
                   key: DAYNOTE_MONGO_URI
             - name: PORT
               value: "5000"
+            - name: GCS_BUCKET_NAME
+              value: "petpa"
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "gcp-service-account.json"
 ---
 apiVersion: v1
 kind: Service
