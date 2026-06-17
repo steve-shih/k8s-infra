@@ -1,131 +1,4 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nginx-config
-data:
-  nginx.conf: |
-    worker_processes 1;
 
-    events {
-        worker_connections 1024;
-    }
-
-    http {
-        include       mime.types;
-        default_type  application/octet-stream;
-
-        sendfile        on;
-        keepalive_timeout  65;
-
-        # 防連點機制 (Rate Limiting)
-        # 每個 IP 每秒最多 20 個請求，允許突發瞬間最高 50 個請求
-        limit_req_zone $binary_remote_addr zone=mylimit:10m rate=20r/s;
-
-        # Tire ERP Server (Port 8000)
-        server {
-            listen       8000;
-            server_name  _;
-
-            proxy_intercept_errors on;
-            error_page 502 504 =200 /failover.html;
-            location = /failover.html {
-                default_type text/html;
-                return 200 "<!DOCTYPE html><html><head><meta charset='utf-8'><title>環境切換中</title></head><body style='text-align:center; padding: 50px; font-family: sans-serif; background: #222; color: #fff;'><h1>🚧 環境 1 (正式) 忙碌中或斷線</h1><h2>系統將於 3 秒後自動切換至【備用環境】...</h2><p>如果沒有自動跳轉，請點擊 <a href='#' id='failover-link' style='color: #00ffcc;'>這裡</a>。</p><script>var target = 'http://35.221.153.58' + (window.location.port ? ':' + window.location.port : '') + window.location.pathname; document.getElementById('failover-link').href = target; setTimeout(function(){ window.location.href = target; }, 3000);</script></body></html>";
-            }
-
-            limit_req zone=mylimit burst=50 nodelay;
-
-            location / {
-                proxy_pass http://tire-erp:8000;
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-            }
-        }
-
-        # dayNoteApp Server (Port 80)
-        server {
-            listen       80 default_server;
-            server_name  _;
-
-            proxy_intercept_errors on;
-            error_page 502 504 =200 /failover.html;
-            location = /failover.html {
-                default_type text/html;
-                return 200 "<!DOCTYPE html><html><head><meta charset='utf-8'><title>環境切換中</title></head><body style='text-align:center; padding: 50px; font-family: sans-serif; background: #222; color: #fff;'><h1>🚧 環境 1 (正式) 忙碌中或斷線</h1><h2>系統將於 3 秒後自動切換至【備用環境】...</h2><p>如果沒有自動跳轉，請點擊 <a href='#' id='failover-link' style='color: #00ffcc;'>這裡</a>。</p><script>var target = 'http://35.221.153.58' + (window.location.port ? ':' + window.location.port : '') + window.location.pathname; document.getElementById('failover-link').href = target; setTimeout(function(){ window.location.href = target; }, 3000);</script></body></html>";
-            }
-
-            limit_req zone=mylimit burst=50 nodelay;
-
-            location = / {
-                return 301 /daynote/;
-            }
-
-            location /daynote {
-                proxy_pass http://daynote-frontend:3000;
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-            }
-
-            location /api/ {
-                proxy_pass http://daynote-backend:5000/api/;
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-            }
-        }
-
-        # FEEDING App (Port 3001)
-        server {
-            listen       3001;
-            server_name  _;
-
-            proxy_intercept_errors on;
-            error_page 502 504 =200 /failover.html;
-            location = /failover.html {
-                default_type text/html;
-                return 200 "<!DOCTYPE html><html><head><meta charset='utf-8'><title>環境切換中</title></head><body style='text-align:center; padding: 50px; font-family: sans-serif; background: #222; color: #fff;'><h1>🚧 環境 1 (正式) 忙碌中或斷線</h1><h2>系統將於 3 秒後自動切換至【備用環境】...</h2><p>如果沒有自動跳轉，請點擊 <a href='#' id='failover-link' style='color: #00ffcc;'>這裡</a>。</p><script>var target = 'http://35.221.153.58' + (window.location.port ? ':' + window.location.port : '') + window.location.pathname; document.getElementById('failover-link').href = target; setTimeout(function(){ window.location.href = target; }, 3000);</script></body></html>";
-            }
-
-            limit_req zone=mylimit burst=50 nodelay;
-
-            location / {
-                proxy_pass http://feeding:3000/;
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-            }
-        }
-
-        # Pet Adoption (Port 5001)
-        server {
-            listen       5001;
-            server_name  _;
-
-            proxy_intercept_errors on;
-            error_page 502 504 =200 /failover.html;
-            location = /failover.html {
-                default_type text/html;
-                return 200 "<!DOCTYPE html><html><head><meta charset='utf-8'><title>環境切換中</title></head><body style='text-align:center; padding: 50px; font-family: sans-serif; background: #222; color: #fff;'><h1>🚧 環境 1 (正式) 忙碌中或斷線</h1><h2>系統將於 3 秒後自動切換至【備用環境】...</h2><p>如果沒有自動跳轉，請點擊 <a href='#' id='failover-link' style='color: #00ffcc;'>這裡</a>。</p><script>var target = 'http://35.221.153.58' + (window.location.port ? ':' + window.location.port : '') + window.location.pathname; document.getElementById('failover-link').href = target; setTimeout(function(){ window.location.href = target; }, 3000);</script></body></html>";
-            }
-
-            limit_req zone=mylimit burst=50 nodelay;
-
-            location / {
-                proxy_pass http://pet-adoption:5000/;
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-            }
-        }
-    }
----
 # 1. Tire ERP
 apiVersion: apps/v1
 kind: Deployment
@@ -341,35 +214,7 @@ spec:
   ports:
     - port: 5000
       targetPort: 5000
----
-# 6. Shared Nginx Gateway
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: shared-nginx
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: shared-nginx
-  template:
-    metadata:
-      labels:
-        app: shared-nginx
-    spec:
-      containers:
-        - name: shared-nginx
-          image: nginx:alpine
-          ports:
-            - containerPort: 80
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
-      volumes:
-        - name: config-volume
-          configMap:
-            name: nginx-config
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -393,24 +238,74 @@ spec:
     requests:
       storage: 1Gi
 ---
-apiVersion: v1
-kind: Service
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: shared-nginx
+  name: erp-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
 spec:
-  selector:
-    app: shared-nginx
-  ports:
-    - name: daynote
-      port: 80
-      targetPort: 80
-    - name: erp
-      port: 8000
-      targetPort: 8000
-    - name: feeding
-      port: 3001
-      targetPort: 3001
-    - name: pet
-      port: 5001
-      targetPort: 5001
-  type: LoadBalancer
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - erp.wheel.petpa.tw
+    secretName: erp-tls
+  rules:
+  - host: erp.wheel.petpa.tw
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tire-erp
+            port:
+              number: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: area-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - area.petpa.tw
+    secretName: area-tls
+  rules:
+  - host: area.petpa.tw
+    http:
+      paths:
+      - path: /daynote/api/?(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: daynote-backend
+            port:
+              number: 5000
+      - path: /daynote/?(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: daynote-frontend
+            port:
+              number: 3000
+      - path: /feeding/?(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: feeding
+            port:
+              number: 3000
+      - path: /petlive/?(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: pet-adoption
+            port:
+              number: 5000
