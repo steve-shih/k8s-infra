@@ -158,6 +158,7 @@ spec:
       containers:
         - name: daynote-frontend
           image: ghcr.io/steve-shih/daynotehtml-daynote-frontend:main
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 3000
@@ -310,3 +311,4 @@ spec:
             name: pet-adoption
             port:
               number: 5000
+
