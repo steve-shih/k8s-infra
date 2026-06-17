@@ -101,6 +101,11 @@ spec:
                 secretKeyRef:
                   name: db-secrets
                   key: DAYNOTE_MONGO_URI
+            - name: ATLAS_MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: DAYNOTE_MONGO_URI
             - name: PORT
               value: "5000"
             - name: GCS_BUCKET_NAME
