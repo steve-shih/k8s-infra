@@ -288,13 +288,7 @@ spec:
   - host: area.petpa.tw
     http:
       paths:
-      - path: /daynote/api/?(.*)
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: daynote-backend
-            port:
-              number: 5000
+
       - path: /daynote/?(.*)
         pathType: ImplementationSpecific
         backend:
