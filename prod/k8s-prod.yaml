@@ -57,9 +57,17 @@ spec:
       containers:
         - name: feeding
           image: ghcr.io/steve-shih/feeding-feeding:main
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 3000
+          volumeMounts:
+            - name: feeding-data
+              mountPath: /app/data
+      volumes:
+        - name: feeding-data
+          persistentVolumeClaim:
+            claimName: feeding-data-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -240,6 +248,17 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: pet-adoption-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: feeding-data-pvc
 spec:
   accessModes:
     - ReadWriteOnce
