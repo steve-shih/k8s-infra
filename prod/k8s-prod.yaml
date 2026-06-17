@@ -90,6 +90,7 @@ spec:
       containers:
         - name: daynote-backend
           image: ghcr.io/steve-shih/daynotehtml-daynote-backend:main
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 5000
@@ -311,4 +312,5 @@ spec:
             name: pet-adoption
             port:
               number: 5000
+
 
