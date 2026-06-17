@@ -324,6 +324,26 @@ spec:
             name: feeding
             port:
               number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pet-adoption-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - area.petpa.tw
+    secretName: area-tls
+  rules:
+  - host: area.petpa.tw
+    http:
+      paths:
       - path: /pet/?(.*)
         pathType: ImplementationSpecific
         backend:
