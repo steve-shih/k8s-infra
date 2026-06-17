@@ -94,7 +94,9 @@ spec:
           ports:
             - containerPort: 5000
           env:
-            - name: ATLAS_MONGO_URI
+            - name: NODE_ENV
+              value: "production"
+            - name: MONGO_URI
               valueFrom:
                 secretKeyRef:
                   name: db-secrets
