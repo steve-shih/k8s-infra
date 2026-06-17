@@ -324,7 +324,7 @@ spec:
             name: feeding
             port:
               number: 3000
-      - path: /petlive/?(.*)
+      - path: /pet/?(.*)
         pathType: ImplementationSpecific
         backend:
           service:
