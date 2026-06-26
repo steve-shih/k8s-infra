@@ -94,6 +94,8 @@ spec:
     metadata:
       labels:
         app: daynote-backend
+      annotations:
+        rollout/restartedAt: "2026-06-26T20:00:00Z"
     spec:
       containers:
         - name: daynote-backend
@@ -163,6 +165,8 @@ spec:
     metadata:
       labels:
         app: daynote-frontend
+      annotations:
+        rollout/restartedAt: "2026-06-26T20:00:00Z"
     spec:
       containers:
         - name: daynote-frontend
