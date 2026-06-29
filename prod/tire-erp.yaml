@@ -2,12 +2,18 @@
 # 檔案名稱 (File): prod/tire-erp.yaml
 # 負責元件 (Component): Tire ERP 系統
 # 檔案用途 (Purpose): 定義生產環境 Tire ERP 的 Deployment、Service 與專屬 Ingress。
-# 關聯設定 (Dependencies): 依賴 db-secrets 中的 TIRE_ERP_MONGO_URI 連線字串與 erp-tls 憑證。
+# 關聯設定 (Dependencies): 依賴 tire-erp namespace 中的 db-secrets 與 erp-tls 憑證。
 # ==============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tire-erp
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tire-erp
+  namespace: tire-erp
 spec:
   replicas: 1
   selector:
@@ -35,6 +41,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: tire-erp
+  namespace: tire-erp
 spec:
   selector:
     app: tire-erp
@@ -46,6 +53,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: erp-ingress
+  namespace: tire-erp
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"

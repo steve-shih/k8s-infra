@@ -1,13 +1,19 @@
 # ==============================================================================
 # 檔案名稱 (File): prod/feeding.yaml
 # 負責元件 (Component): 餵食系統 (Feeding)
-# 檔案用途 (Purpose): 定義生產環境 Feeding 後端的 Deployment、Service 與綁定的 PVC。
-# 關聯設定 (Dependencies): 需要 daynote.yaml 中的 area-ingress 進行 /feeding 的路由轉發。
+# 檔案用途 (Purpose): 定義生產環境 Feeding 後端的 Deployment、Service 與綁定的 PVC，以及專屬的 feeding-ingress。
+# 關聯設定 (Dependencies): 無相依外部 Secret。
 # ==============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: feeding
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: feeding
+  namespace: feeding
 spec:
   replicas: 1
   selector:
@@ -36,6 +42,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: feeding
+  namespace: feeding
 spec:
   selector:
     app: feeding
@@ -47,9 +54,37 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: feeding-data-pvc
+  namespace: feeding
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: feeding-ingress
+  namespace: feeding
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - area.petpa.tw
+    secretName: area-tls
+  rules:
+  - host: area.petpa.tw
+    http:
+      paths:
+      - path: /feeding/?(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: feeding
+            port:
+              number: 3000

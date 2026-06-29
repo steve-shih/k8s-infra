@@ -2,12 +2,18 @@
 # 檔案名稱 (File): prod/pet-adoption.yaml
 # 負責元件 (Component): 寵物領養平台 (Pet Adoption)
 # 檔案用途 (Purpose): 部署寵物領養平台的 Deployment、Service、PVC 以及專屬 Ingress。
-# 關聯設定 (Dependencies): 依賴 db-secrets 內的 PET_MONGODB_URI 與 area-tls 憑證。
+# 關聯設定 (Dependencies): 依賴 pet-adoption namespace 內的 db-secrets 與 area-tls 憑證。
 # ==============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pet-adoption
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pet-adoption
+  namespace: pet-adoption
 spec:
   replicas: 1
   selector:
@@ -41,6 +47,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: pet-adoption
+  namespace: pet-adoption
 spec:
   selector:
     app: pet-adoption
@@ -52,6 +59,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: pet-adoption-pvc
+  namespace: pet-adoption
 spec:
   accessModes:
     - ReadWriteOnce
@@ -63,6 +71,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: pet-adoption-ingress
+  namespace: pet-adoption
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"

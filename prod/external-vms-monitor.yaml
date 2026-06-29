@@ -1,0 +1,73 @@
+# ==============================================================================
+# 檔案名稱 (File): prod/external-vms-monitor.yaml
+# 負責元件 (Component): 外部機器監控 (External VM Monitoring)
+# 檔案用途 (Purpose): 示範如何讓 K8s 內的 Prometheus 去監控「K8s 外部的傳統 VM 主機」。
+# 關聯設定 (Dependencies): 外部主機需安裝好 node_exporter (預設 port 9100)。
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 【目標 1】K8s 叢集本身 (不用寫！)
+# 註解：因為我們安裝了 kube-prometheus-stack，所以 K8s 裡面的 Node、Pod、CPU、
+# 記憶體等，預設就「已經在全自動監控中」了！不需要額外寫任何設定。
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# 【目標 2】外部 VM 群組 (假資料範例)
+# 假設我們在 GCP 或地端有兩台傳統 VM，IP 分別為 192.0.0.8 與 192.0.0.9
+# 我們要把這兩台機器「偽裝」成 K8s 內部的 Service，讓 Prometheus 去抓。
+# ------------------------------------------------------------------------------
+
+# 第一步：把所有外部機器的 IP 列在同一個 Endpoints 裡面
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: my-legacy-vms
+  namespace: monitoring # 統一放在監控房間
+  labels:
+    app: my-legacy-vms
+subsets:
+  - addresses:
+      - ip: 192.0.0.8   # (假 IP) 外部 VM 第一台
+      - ip: 192.0.0.9   # (假 IP) 外部 VM 第二台
+      # 如果有第三台，就繼續往下加...
+      # - ip: 192.0.0.10
+    ports:
+      - name: metrics
+        port: 9100      # 這是 node_exporter 的預設 port
+
+---
+# 第二步：為這群機器宣告一個虛擬的 K8s Service (名字要跟 Endpoints 一樣)
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-legacy-vms
+  namespace: monitoring
+  labels:
+    app: my-legacy-vms
+spec:
+  # 注意：這裡刻意「不寫」 selector，代表它會直接去吃上面的 Endpoints IP，而不是去尋找 Pod
+  ports:
+    - name: metrics
+      port: 9100
+      targetPort: 9100
+
+---
+# 第三步：舉牌子！宣告 ServiceMonitor，通知 Prometheus 自動來抓資料
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: monitor-my-legacy-vms
+  namespace: monitoring
+  labels:
+    # 這裡的 label 很重要！
+    # Prometheus Operator 預設會掃描帶有特定 label 的 ServiceMonitor。
+    # 通常 kube-prometheus-stack 預設會抓取 release=kube-prometheus-stack 或是所有標籤
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: my-legacy-vms # 對應到上面 Service 的 Label
+  endpoints:
+    - port: metrics      # 對應到上面 Service 的 Port 名稱
+      interval: 30s      # 每 30 秒去抓一次資料
+      scrapeTimeout: 10s # 如果超過 10 秒沒回應就當作逾時
