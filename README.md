@@ -7,6 +7,56 @@
 
 ---
 
+## 🚀 全新 GCP 叢集初始化指南 (一鍵啟動)
+
+如果這是一個剛開好、熱騰騰的全新 GCP 叢集，你需要先手動下達最初的啟動指令，把 ArgoCD 機器人裝起來，並把專案庫交接給它。
+以下提供兩種操作方法（擇一即可，**整個叢集的生命週期只需執行一次**）：
+
+### 🟢 方案一：在 GCP 網頁版 Cloud Shell 操作 (最推薦、最簡單)
+不需要在本地電腦安裝任何工具，直接使用網頁版終端機即可完成。
+
+1. 登入 Google Cloud Console，進入 **Kubernetes Engine (GKE)** 頁面。
+2. 找到你的叢集，點擊旁邊的 **「連線 (Connect)」**。
+3. 點選 **「在 Cloud Shell 中執行 (Run in Cloud Shell)」**，然後在彈出的終端機輸入以下指令：
+
+```bash
+# 1. 建立一個專門給 ArgoCD 住的 Namespace
+kubectl create namespace argocd
+
+# 2. 從官方下載並安裝 ArgoCD
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# 3. 透過 git clone 直接把專案從 GitHub 下載到 Cloud Shell
+git clone https://github.com/steve-shih/k8s-infra.git
+
+# 4. 進入專案資料夾
+cd k8s-infra
+
+# 5. 發送任務總表給叢集，讓 ArgoCD 自動接管 prod/ 資料夾
+kubectl apply -f argocd-app.yaml
+```
+
+### 🔵 方案二：在本機電腦終端機操作 (需先安裝 gcloud CLI)
+如果你習慣在自己的電腦 (例如 VSCode 的終端機、PowerShell) 下指令，請確認你已安裝 Google Cloud CLI (`gcloud`)：
+
+1. 首先取得 GCP 叢集的連線授權：
+```bash
+gcloud container clusters get-credentials <你的叢集名稱> --zone <你的主機區域> --project <你的GCP專案ID>
+```
+
+2. 接著依序執行安裝與派發任務：
+```bash
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# (由於你本機已經有這份專案程式碼，所以不用再 git clone，只需確認你已經用 cd 進入 k8s-infra 資料夾即可)
+kubectl apply -f argocd-app.yaml
+```
+
+> **🎉 大功告成！** 執行完畢後，ArgoCD 會自動把 `daynote`、`feeding`、`tire-erp`、`pet-adoption` 還有 `PLG 監控系統` 全部安裝到好！以後你要更新系統，只需要修改這個專案庫並 `git push` 上來即可。
+
+---
+
 ## 📂 專案目錄結構總覽
 
 為了讓團隊成員快速上手，我們將所有設定檔進行了嚴格的分類：
