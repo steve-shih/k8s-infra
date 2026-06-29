@@ -68,15 +68,10 @@ metadata:
   name: feeding-ingress
   namespace: feeding
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
-  tls:
-  - hosts:
-    - area.petpa.tw
-    secretName: area-tls
   rules:
   - host: area.petpa.tw
     http:
