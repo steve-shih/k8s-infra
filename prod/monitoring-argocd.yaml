@@ -4,21 +4,24 @@
 # 檔案用途 (Purpose): 透過 ArgoCD 自動部署官方 Helm Charts，建立全叢集的指標與日誌監控大腦。
 # 關聯設定 (Dependencies): 依賴外部 Helm Repo (prometheus-community, grafana)。
 # ==============================================================================
+
+# 第一部分：安裝 Prometheus 與 Grafana (指標與視覺化面板)
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kube-prometheus-stack
-  namespace: argocd
+  name: kube-prometheus-stack     # 在 ArgoCD 介面上顯示的專案名稱
+  namespace: argocd               # 告訴 K8s 這個任務單是要交給 ArgoCD 處理的
 spec:
   project: default
   source:
-    repoURL: 'https://prometheus-community.github.io/helm-charts'
-    targetRevision: 65.2.0
-    chart: kube-prometheus-stack
+    repoURL: 'https://prometheus-community.github.io/helm-charts'  # 官方下載來源 (就像 App Store)
+    targetRevision: 65.2.0        # 要下載的軟體版本號
+    chart: kube-prometheus-stack  # 官方軟體包的名稱
     helm:
+      # values 是讓我們「客製化」官方軟體包的地方
       values: |
         grafana:
-          adminPassword: "admin"
+          adminPassword: "admin"  # 👉 [客製化] 將 Grafana 網頁登入密碼強制設定為 admin
         prometheus:
           prometheusSpec:
             storageSpec:
@@ -27,41 +30,44 @@ spec:
                   accessModes: ["ReadWriteOnce"]
                   resources:
                     requests:
-                      storage: 10Gi
+                      storage: 10Gi  # 👉 [客製化] 給 Prometheus 10GB 的專屬硬碟空間來存資料
   destination:
-    server: 'https://kubernetes.default.svc'
-    namespace: monitoring
+    server: 'https://kubernetes.default.svc' # 部署目的地：目前這個叢集自己
+    namespace: monitoring         # 👉 [重要] 把這些監控軟體全部安裝到 monitoring 命名空間裡，方便集中管理
   syncPolicy:
     automated:
-      prune: true
-      selfHeal: true
+      prune: true                 # 如果我們在 GitHub 刪除設定，線上環境也會跟著刪除
+      selfHeal: true              # 遇到手動亂改線上設定時，ArgoCD 會強制把它恢復成 GitHub 上的樣子 (自動修復)
     syncOptions:
-      - CreateNamespace=true
+      - CreateNamespace=true      # 如果 monitoring 這個命名空間還不存在，就自動幫忙建一個
+
 ---
+
+# 第二部分：安裝 Loki (專門用來收集 Log 日誌的系統)
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: loki-stack
+  name: loki-stack                # 在 ArgoCD 介面上顯示的專案名稱
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: 'https://grafana.github.io/helm-charts'
-    targetRevision: 2.10.2
-    chart: loki-stack
+    repoURL: 'https://grafana.github.io/helm-charts' # 官方下載來源
+    targetRevision: 2.10.2        # Loki 的軟體版本號
+    chart: loki-stack             # 官方軟體包的名稱
     helm:
       values: |
         grafana:
-          enabled: false
+          enabled: false          # 👉 [客製化] 因為上面已經裝過 Grafana 了，所以這裡關掉，不要重複安裝
         prometheus:
-          enabled: false
+          enabled: false          # 👉 [客製化] 上面已經裝過 Prometheus 了，這裡也關掉
         loki:
           persistence:
-            enabled: true
-            size: 10Gi
+            enabled: true         # 👉 [客製化] 開啟 Loki 的硬碟儲存功能，否則重開機 Log 就會不見
+            size: 10Gi            # 👉 [客製化] 給 Loki 10GB 的專屬硬碟空間來存 Log
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: monitoring
+    namespace: monitoring         # 同樣安裝到 monitoring 命名空間
   syncPolicy:
     automated:
       prune: true
