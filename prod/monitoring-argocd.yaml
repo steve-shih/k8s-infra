@@ -1,3 +1,9 @@
+# ==============================================================================
+# 檔案名稱 (File): prod/monitoring-argocd.yaml
+# 負責元件 (Component): PLG 監控系統 (Prometheus + Loki + Grafana)
+# 檔案用途 (Purpose): 透過 ArgoCD 自動部署官方 Helm Charts，建立全叢集的指標與日誌監控大腦。
+# 關聯設定 (Dependencies): 依賴外部 Helm Repo (prometheus-community, grafana)。
+# ==============================================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

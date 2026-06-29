@@ -1,0 +1,167 @@
+# ==============================================================================
+# 檔案名稱 (File): prod/k8s-petbar.yaml
+# 負責元件 (Component): PetBar (PetLive) 直播平台
+# 檔案用途 (Purpose): 部署 PetBar 前端、後端、WebRTC Peer 伺服器與綁定的 Ingress 路由。
+# 關聯設定 (Dependencies): 依賴 db-secrets 內的 PETLIVE_MONGO_URI 與 GCP 憑證。
+# ==============================================================================
+
+# 1. PetBar Frontend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petbar-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: petbar-frontend
+  template:
+    metadata:
+      labels:
+        app: petbar-frontend
+    spec:
+      containers:
+        - name: petbar-frontend
+          image: ghcr.io/steve-shih/petlive-frontend:main
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: petbar-frontend
+spec:
+  selector:
+    app: petbar-frontend
+  ports:
+    - port: 3000
+      targetPort: 3000
+
+---
+# 2. PetBar Backend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petbar-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: petbar-backend
+  template:
+    metadata:
+      labels:
+        app: petbar-backend
+    spec:
+      containers:
+        - name: petbar-backend
+          image: ghcr.io/steve-shih/petlive-backend:main
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: PETLIVE_MONGO_URI
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/app/secrets/gcp-service-account.json"
+          volumeMounts:
+            - name: gcp-secrets
+              mountPath: /app/secrets
+              readOnly: true
+      volumes:
+        - name: gcp-secrets
+          secret:
+            secretName: db-secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: petbar-backend
+spec:
+  selector:
+    app: petbar-backend
+  ports:
+    - port: 5000
+      targetPort: 5000
+
+---
+# 3. PetBar Peer Server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petbar-peer-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: petbar-peer-server
+  template:
+    metadata:
+      labels:
+        app: petbar-peer-server
+    spec:
+      containers:
+        - name: petbar-peer-server
+          image: ghcr.io/steve-shih/petlive-peer-server:main
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: petbar-peer-server
+spec:
+  selector:
+    app: petbar-peer-server
+  ports:
+    - port: 3000
+      targetPort: 3000
+
+---
+# 4. Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: petbar-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - live.petpa.tw
+    secretName: petbar-tls
+  rules:
+  - host: live.petpa.tw
+    http:
+      paths:
+      - path: /api/?(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: petbar-backend
+            port:
+              number: 5000
+      - path: /peer-api/?(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: petbar-peer-server
+            port:
+              number: 3000
+      - path: /?(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: petbar-frontend
+            port:
+              number: 3000

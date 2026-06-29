@@ -1,0 +1,68 @@
+# ==============================================================================
+# 檔案名稱 (File): prod/tire-erp.yaml
+# 負責元件 (Component): Tire ERP 系統
+# 檔案用途 (Purpose): 定義生產環境 Tire ERP 的 Deployment、Service 與專屬 Ingress。
+# 關聯設定 (Dependencies): 依賴 db-secrets 中的 TIRE_ERP_MONGO_URI 連線字串與 erp-tls 憑證。
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tire-erp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tire-erp
+  template:
+    metadata:
+      labels:
+        app: tire-erp
+    spec:
+      containers:
+        - name: tire-erp
+          image: ghcr.io/steve-shih/tire_erp-tire-erp:master
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: TIRE_ERP_MONGO_URI
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tire-erp
+spec:
+  selector:
+    app: tire-erp
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: erp-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - erp.wheel.petpa.tw
+    secretName: erp-tls
+  rules:
+  - host: erp.wheel.petpa.tw
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tire-erp
+            port:
+              number: 8000

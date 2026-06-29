@@ -1,0 +1,20 @@
+# ==============================================================================
+# 檔案名稱 (File): cluster-setup/cluster-issuer.yaml
+# 負責元件 (Component): Cert-Manager
+# 檔案用途 (Purpose): 設定 Let's Encrypt 憑證核發機構，自動為 Ingress 產生免費 HTTPS SSL 憑證。
+# 關聯設定 (Dependencies): 需要預先在叢集中安裝 Cert-Manager。
+# ==============================================================================
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@petpa.tw
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+    - http01:
+        ingress:
+          class: nginx

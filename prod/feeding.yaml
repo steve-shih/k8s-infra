@@ -1,0 +1,55 @@
+# ==============================================================================
+# 檔案名稱 (File): prod/feeding.yaml
+# 負責元件 (Component): 餵食系統 (Feeding)
+# 檔案用途 (Purpose): 定義生產環境 Feeding 後端的 Deployment、Service 與綁定的 PVC。
+# 關聯設定 (Dependencies): 需要 daynote.yaml 中的 area-ingress 進行 /feeding 的路由轉發。
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feeding
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: feeding
+  template:
+    metadata:
+      labels:
+        app: feeding
+    spec:
+      containers:
+        - name: feeding
+          image: ghcr.io/steve-shih/feeding-feeding:main
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: feeding-data
+              mountPath: /app/data
+      volumes:
+        - name: feeding-data
+          persistentVolumeClaim:
+            claimName: feeding-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: feeding
+spec:
+  selector:
+    app: feeding
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: feeding-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

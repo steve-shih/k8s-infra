@@ -1,3 +1,9 @@
+# ==============================================================================
+# 檔案名稱 (File): local/patch.py
+# 負責元件 (Component): 網路備援腳本 (Network Failover)
+# 檔案用途 (Purpose): 動態修改 k8s-full-stack.yaml，為 NGINX Ingress 注入「環境 1 斷線自動跳轉至備用環境」的 HTML 錯誤頁面。
+# 關聯設定 (Dependencies): 需要有 k8s-full-stack.yaml 存在於同一目錄。
+# ==============================================================================
 # -*- coding: utf-8 -*-
 import re
 

@@ -1,3 +1,9 @@
+# ==============================================================================
+# 檔案名稱 (File): argocd-app.yaml
+# 負責元件 (Component): ArgoCD GitOps
+# 檔案用途 (Purpose): 宣告 ArgoCD 應用的最上層 App，負責監控 k8s-infra/prod 資料夾自動同步部署。
+# 關聯設定 (Dependencies): 需要預先在叢集中安裝 ArgoCD。
+# ==============================================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

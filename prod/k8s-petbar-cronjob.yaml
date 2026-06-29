@@ -1,0 +1,40 @@
+# ==============================================================================
+# 檔案名稱 (File): prod/k8s-petbar-cronjob.yaml
+# 負責元件 (Component): PetBar (PetLive) 排程任務
+# 檔案用途 (Purpose): 定時執行背景腳本 (cleanup_vods.py)，負責清理過期或無效的影片檔。
+# 關聯設定 (Dependencies): 依賴 db-secrets 內的 MongoDB 與 GCP 憑證。
+# ==============================================================================
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: petbar-cleanup-vods
+spec:
+  schedule: "0 * * * *" # Every hour
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: petbar-cleanup
+            image: ghcr.io/steve-shih/petlive-backend:main
+            imagePullPolicy: Always
+            command: ["python", "cleanup_vods.py"]
+            env:
+            - name: NODE_ENV
+              value: "production"
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: PETLIVE_MONGO_URI
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/app/secrets/gcp-service-account.json"
+            volumeMounts:
+            - name: gcp-secrets
+              mountPath: /app/secrets
+              readOnly: true
+          volumes:
+          - name: gcp-secrets
+            secret:
+              secretName: db-secrets
+          restartPolicy: OnFailure
