@@ -51,6 +51,10 @@ spec:
               value: "petpa"
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: "/app/secrets/gcp-service-account.json"
+            - name: LOCAL_AI_URL
+              value: "http://<請填入您的固定IP>:8000"
+            - name: LOCAL_AI_KEY
+              value: "my_secure_api_key_2026"
           volumeMounts:
             - name: daynote-data
               mountPath: /app/data
