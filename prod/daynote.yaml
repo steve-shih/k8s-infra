@@ -24,7 +24,7 @@ spec:
       labels:
         app: daynote-backend
       annotations:
-        rollout/restartedAt: "2026-07-02T12:35:00Z"
+        rollout/restartedAt: "2026-07-02T12:41:00Z"
     spec:
       containers:
         - name: daynote-backend
@@ -95,7 +95,7 @@ spec:
       labels:
         app: daynote-frontend
       annotations:
-        rollout/restartedAt: "2026-07-02T12:35:00Z"
+        rollout/restartedAt: "2026-07-02T12:41:00Z"
     spec:
       containers:
         - name: daynote-frontend
