@@ -24,11 +24,11 @@ spec:
       labels:
         app: daynote-backend
       annotations:
-        rollout/restartedAt: "2026-07-03T00:51:17Z"
+        rollout/restartedAt: "2026-07-03T15:20:00Z"
     spec:
       containers:
         - name: daynote-backend
-          image: ghcr.io/steve-shih/daynotehtml-daynote-backend:main
+          image: ghcr.io/steve-shih/daynotehtml-backend:main
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
@@ -99,11 +99,11 @@ spec:
       labels:
         app: daynote-frontend
       annotations:
-        rollout/restartedAt: "2026-07-03T00:51:17Z"
+        rollout/restartedAt: "2026-07-03T15:20:00Z"
     spec:
       containers:
         - name: daynote-frontend
-          image: ghcr.io/steve-shih/daynotehtml-daynote-frontend:main
+          image: ghcr.io/steve-shih/daynotehtml-frontend:main
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
