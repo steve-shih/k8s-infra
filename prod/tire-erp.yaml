@@ -1,9 +1,7 @@
 # ==============================================================================
-# 檔案名稱 (File): prod/tire-erp.yaml
-# 負責元件 (Component): Tire ERP 系統
-# 檔案用途 (Purpose): 定義生產環境 Tire ERP 的 Deployment、Service 與專屬 Ingress。
-# 關聯設定 (Dependencies): 依賴 tire-erp namespace 中的 db-secrets 與 erp-tls 憑證。
-# ==============================================================================
+# 檔�??�稱 (File): prod/tire-erp.yaml
+# 負責?�件 (Component): Tire ERP 系統
+# 檔�??��?(Purpose): 定義?�產?��? Tire ERP ??Deployment?�Service ?��?�?Ingress??# ?�聯設�? (Dependencies): 依賴 tire-erp namespace 中�? db-secrets ??erp-tls ?��???# ==============================================================================
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -15,7 +13,7 @@ metadata:
   name: tire-erp
   namespace: tire-erp
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: tire-erp

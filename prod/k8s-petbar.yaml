@@ -1,9 +1,7 @@
 # ==============================================================================
-# 檔案名稱 (File): prod/k8s-petbar.yaml
-# 負責元件 (Component): PetBar (PetLive) 直播平台
-# 檔案用途 (Purpose): 部署 PetBar 前端、後端、WebRTC Peer 伺服器與綁定的 Ingress 路由。
-# 關聯設定 (Dependencies): 依賴 petbar namespace 內的 db-secrets 與 GCP 憑證。
-# ==============================================================================
+# 檔�??�稱 (File): prod/k8s-petbar.yaml
+# 負責?�件 (Component): PetBar (PetLive) ?�播平台
+# 檔�??��?(Purpose): ?�署 PetBar ?�端?��?端、WebRTC Peer 伺�??��?綁�???Ingress 路由??# ?�聯設�? (Dependencies): 依賴 petbar namespace ?��? db-secrets ??GCP ?��???# ==============================================================================
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -16,7 +14,7 @@ metadata:
   name: petbar-frontend
   namespace: petbar
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: petbar-frontend
@@ -52,7 +50,7 @@ metadata:
   name: petbar-backend
   namespace: petbar
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: petbar-backend
@@ -106,7 +104,7 @@ metadata:
   name: petbar-peer-server
   namespace: petbar
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: petbar-peer-server

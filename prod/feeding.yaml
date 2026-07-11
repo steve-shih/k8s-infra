@@ -1,9 +1,7 @@
 # ==============================================================================
-# 檔案名稱 (File): prod/feeding.yaml
-# 負責元件 (Component): 餵食系統 (Feeding)
-# 檔案用途 (Purpose): 定義生產環境 Feeding 後端的 Deployment、Service 與綁定的 PVC，以及專屬的 feeding-ingress。
-# 關聯設定 (Dependencies): 無相依外部 Secret。
-# ==============================================================================
+# 檔�??�稱 (File): prod/feeding.yaml
+# 負責?�件 (Component): 餵�?系統 (Feeding)
+# 檔�??��?(Purpose): 定義?�產?��? Feeding 後端??Deployment?�Service ?��?定�? PVC，以?��?屬�? feeding-ingress??# ?�聯設�? (Dependencies): ?�相依�???Secret??# ==============================================================================
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -15,7 +13,7 @@ metadata:
   name: feeding
   namespace: feeding
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: feeding

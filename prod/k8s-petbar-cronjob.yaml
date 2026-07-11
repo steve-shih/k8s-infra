@@ -1,9 +1,7 @@
 # ==============================================================================
-# 檔案名稱 (File): prod/k8s-petbar-cronjob.yaml
-# 負責元件 (Component): PetBar (PetLive) 排程任務
-# 檔案用途 (Purpose): 定時執行背景腳本 (cleanup_vods.py)，負責清理過期或無效的影片檔。
-# 關聯設定 (Dependencies): 依賴 petbar namespace 內的 db-secrets 與 GCP 憑證。
-# ==============================================================================
+# 檔�??�稱 (File): prod/k8s-petbar-cronjob.yaml
+# 負責?�件 (Component): PetBar (PetLive) ?��?任�?
+# 檔�??��?(Purpose): 定�??��??�景?�本 (cleanup_vods.py)，�?責�??��??��??��??�影?��???# ?�聯設�? (Dependencies): 依賴 petbar namespace ?��? db-secrets ??GCP ?��???# ==============================================================================
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -11,6 +9,7 @@ metadata:
   namespace: petbar
 spec:
   schedule: "0 * * * *" # Every hour
+  suspend: true
   jobTemplate:
     spec:
       template:

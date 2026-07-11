@@ -1,0 +1,11 @@
+{
+  "targetFiles": [
+    "prod/feeding.yaml",
+    "prod/pet-adoption.yaml",
+    "prod/tire-erp.yaml",
+    "prod/k8s-petbar.yaml"
+  ],
+  "cronjobFiles": [
+    "prod/k8s-petbar-cronjob.yaml"
+  ]
+}
