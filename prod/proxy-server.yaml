@@ -1,7 +1,7 @@
 # ==============================================================================
 # 檔案名稱 (File): prod/proxy-server.yaml
-# 負責組件 (Component): 基礎設施 - 獨立 Proxy 服務 (Proxy Server)
-# 檔案用途 (Purpose): 定義 Namespace proxy-system、Deployment 與 LoadBalancer Service
+# 負責组件 (Component): 基礎設施 - 獨立 Proxy 服務 (Proxy Server)
+# 檔案用途 (Purpose): 定義 Namespace proxy-system、Deployment (GOST 支援 SOCKS5 與 HTTP 雙協定) 與 LoadBalancer Service
 # 相依資源 (Dependencies): 無
 # ==============================================================================
 apiVersion: v1
@@ -20,7 +20,8 @@ data:
       "serviceName": "proxy-server",
       "namespace": "proxy-system",
       "ports": {
-        "socks5": 1080
+        "socks5": 1080,
+        "http": 8888
       },
       "auth": {
         "enabled": false
@@ -45,15 +46,19 @@ spec:
         app: proxy-server
     spec:
       containers:
-        - name: socks5-proxy
-          image: serjs/go-socks5-proxy:latest
+        - name: gost-proxy
+          image: ginuerzh/gost:latest
           imagePullPolicy: IfNotPresent
-          env:
-            - name: REQUIRE_AUTH
-              value: "false"
+          args:
+            - "-L"
+            - "socks5://:1080"
+            - "-L"
+            - "http://:8888"
           ports:
             - containerPort: 1080
               name: socks5
+            - containerPort: 8888
+              name: http
           resources:
             requests:
               cpu: 20m
@@ -82,3 +87,6 @@ spec:
     - name: socks5
       port: 1080
       targetPort: 1080
+    - name: http
+      port: 8888
+      targetPort: 8888
