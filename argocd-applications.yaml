@@ -1,0 +1,138 @@
+# ==============================================================================
+# 檔案名稱 (File): argocd-applications.yaml
+# 負責組件 (Component): ArgoCD GitOps 獨立空間管理
+# 檔案用途 (Purpose): 為每一個獨立功能模組與基礎設施開闢專屬 ArgoCD Application 獨立空間
+# 相依資源 (Dependencies): 依賴 argocd namespace
+# ==============================================================================
+
+# 1. 獨立基礎設施：Proxy Server
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: proxy-system
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/steve-shih/k8s-infra.git'
+    targetRevision: main
+    path: prod
+    directory:
+      include: 'proxy-server.yaml'
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: proxy-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+# 2. 獨立模組：Daynote 筆記系統
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: daynote
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/steve-shih/k8s-infra.git'
+    targetRevision: main
+    path: prod
+    directory:
+      include: 'daynote.yaml'
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: daynote
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+# 3. 獨立模組：Feeding 餵食系統
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: feeding
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/steve-shih/k8s-infra.git'
+    targetRevision: main
+    path: prod
+    directory:
+      include: 'feeding.yaml'
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: feeding
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+# 4. 獨立模組：PetBar 寵物酒吧系統
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: petbar
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/steve-shih/k8s-infra.git'
+    targetRevision: main
+    path: prod
+    directory:
+      include: 'k8s-petbar*.yaml'
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: petbar
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+# 5. 獨立模組：Pet Adoption 領養系統
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pet-adoption
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/steve-shih/k8s-infra.git'
+    targetRevision: main
+    path: prod
+    directory:
+      include: 'pet-adoption.yaml'
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: pet-adoption
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+# 6. 獨立模組：Tire ERP 輪胎管理系統
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tire-erp
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/steve-shih/k8s-infra.git'
+    targetRevision: main
+    path: prod
+    directory:
+      include: 'tire-erp.yaml'
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: tire-erp
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

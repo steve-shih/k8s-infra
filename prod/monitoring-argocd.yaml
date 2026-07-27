@@ -30,7 +30,7 @@ spec:
                   accessModes: ["ReadWriteOnce"]
                   resources:
                     requests:
-                      storage: 10Gi  # 👉 [客製化] 給 Prometheus 10GB 的專屬硬碟空間來存資料
+                      storage: 10Gi  # 👉 [客製化] 給 Prometheus 20GB 的專屬硬碟空間來存資料
   destination:
     server: 'https://kubernetes.default.svc' # 部署目的地：目前這個叢集自己
     namespace: monitoring         # 👉 [重要] 把這些監控軟體全部安裝到 monitoring 命名空間裡，方便集中管理

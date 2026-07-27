@@ -1,0 +1,11 @@
+{
+  "serviceName": "proxy-server",
+  "namespace": "proxy-system",
+  "ports": {
+    "socks5": 1080
+  },
+  "auth": {
+    "enabled": false
+  },
+  "description": "Kubernetes 獨立 Proxy Server 設定檔"
+}
