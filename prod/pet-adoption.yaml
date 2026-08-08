@@ -25,6 +25,7 @@ spec:
       containers:
         - name: pet-adoption
           image: ghcr.io/steve-shih/pet-adoption-signing-pet-adoption:main
+        imagePullPolicy: Always
           ports:
             - containerPort: 5000
           env:
