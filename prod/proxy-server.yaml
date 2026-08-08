@@ -36,7 +36,7 @@ metadata:
   labels:
     app: proxy-server
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: proxy-server
@@ -80,7 +80,7 @@ metadata:
   name: proxy-service
   namespace: proxy-system
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: proxy-server
   ports:
