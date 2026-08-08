@@ -1,7 +1,7 @@
-# ==============================================================================
-# 檔�??�稱 (File): prod/pet-adoption.yaml
-# 負責?�件 (Component): 寵物?��?平台 (Pet Adoption)
-# 檔�??��?(Purpose): ?�署寵物?��?平台??Deployment?�Service?�PVC 以�?專屬 Ingress??# ?�聯設�? (Dependencies): 依賴 pet-adoption namespace ?��? db-secrets ??area-tls ?��???# ==============================================================================
+﻿# ==============================================================================
+# 檔�??�稱 (File): prod/pet-adoption.yaml
+# 負責?�件 (Component): 寵物?��?平台 (Pet Adoption)
+# 檔�??��?(Purpose): ?�署寵物?��?平台??Deployment?�Service?�PVC 以�?專屬 Ingress??# ?�聯設�? (Dependencies): 依賴 pet-adoption namespace ?��? db-secrets ??area-tls ?��???# ==============================================================================
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -13,7 +13,7 @@ metadata:
   name: pet-adoption
   namespace: pet-adoption
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app: pet-adoption

@@ -1,7 +1,7 @@
-# ==============================================================================
-# 檔�??�稱 (File): prod/feeding.yaml
-# 負責?�件 (Component): 餵�?系統 (Feeding)
-# 檔�??��?(Purpose): 定義?�產?��? Feeding 後端??Deployment?�Service ?��?定�? PVC，以?��?屬�? feeding-ingress??# ?�聯設�? (Dependencies): ?�相依�???Secret??# ==============================================================================
+﻿# ==============================================================================
+# 檔�??�稱 (File): prod/feeding.yaml
+# 負責?�件 (Component): 餵�?系統 (Feeding)
+# 檔�??��?(Purpose): 定義?�產?��? Feeding 後端??Deployment?�Service ?��?定�? PVC，以?��?屬�? feeding-ingress??# ?�聯設�? (Dependencies): ?�相依�???Secret??# ==============================================================================
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -13,7 +13,7 @@ metadata:
   name: feeding
   namespace: feeding
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app: feeding
